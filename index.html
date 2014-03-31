@@ -1,0 +1,281 @@
+
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <title>High School Graduation Rates Increasing</title>
+    <link href="css/bootstrap.css" rel="stylesheet">
+    <link href="css/dataTables.css" rel="stylesheet">
+    <link href="css/style.css" rel="stylesheet">
+  </head>
+
+  <body>
+    <div class="container">
+      <h1>High School Graduation Rates Increasing</h1>
+      <hr>
+      <h2>Public Graduation Rate by State</h2>
+      <p class="substory">From 2000-2009, the United States has seen a steady increase in the number of students graduating from high school. Over the decade, the graduation rate increased by nearly 340,000 students per year. With the exception of Louisiana, Montana, Nebraska, North Dakota, South Dakota, Utah, West Virginia, and Wyoming, the United States has seen a rise of graduating high schoolers.</p>
+      <hr class="black">
+      <div class="row">
+        <div class="col-md-6">
+          <div id="graduateChart"></div>
+          <span class="source left">SOURCE: United States Census Bereau</span>
+          <span class="source right">US DEPARTMENT OF COMMERCE</span>
+        </div>
+        <div class="col-md-6">
+          <div id="map-container">
+            <h3 class="map-heading">Click a State to See Data</h3>
+            <div id="map"></div>
+            <button class="btn btn-default" onclick='loadChart(graduateData[0], "#graduateChart", "High School Graduates in The United States By Year", "Number of Graduates in Thousands")'>Reset</button>
+          </div>
+        </div>
+      </div>
+      <hr class="thick">
+
+      <h2>Decreasing Dropout Rates: Another Way of Looking At It</h2>
+      <p class="substory">Increasing numbers of high school graduates correlates with a decreasing rate of high school dropouts. This decreasing dropout rate can be attributed to a number of factors such as a lower teenage pregnancy rate and a larger focus on extra- and co-curricular activities.</p>
+
+      <p class="substory">Click on the data points below to see information on the demographics of high school dropouts.</p>
+      <hr class="black">
+      <div class="row">
+        <div class="col-md-1"></div>
+        <div class="col-md-10">
+          <div id="dropoutChart"></div>
+          <span class="source">SOURCE: United States Census Bereau</span>
+          <span class="source right">US DEPARTMENT OF COMMERCE</span>
+        </div>
+        <div class="col-md-1"></div>
+      </div>
+      <hr class="thick">
+
+      <h2>Full Data</h2>
+      <p class="substory">Look at the full data of public high school graduation rates to directly compare and contrast states or find the state with the most/least annual graduates.</p>
+      <hr class="black">
+      <h4 class="tableHeader">Public Graduation Rate by State in Thousands</h4>
+      <div id="graduateTable"></div>
+      <span class="source left">SOURCE: United States Census Bereau</span>
+      <span class="source right">US DEPARTMENT OF COMMERCE</span>
+    </div><!-- /.container -->
+
+    <!-- Bootstrap core JavaScript
+    ================================================== -->
+    <!-- Placed at the end of the document so the pages load faster -->
+    <script type="text/javascript" src="js/jquery.js"></script>
+    <script type="text/javascript" src="js/dataTables.js"></script>
+    <script type="text/javascript" src="js/highcharts.js"></script>
+    <script type="text/javascript" src="js/raphael.js"></script>
+    <script type="text/javascript" src="js/usmap.js"></script>
+    <script type="text/javascript" src="http://www.highcharts.com/highslide/highslide-full.min.js"></script>
+<script type="text/javascript" src="http://www.highcharts.com/highslide/highslide.config.js" charset="utf-8"></script>
+<link rel="stylesheet" type="text/css" href="http://www.highcharts.com/highslide/highslide.css" />
+
+    <script>
+    var graduateData = [];
+    var dropoutData = [];
+    var dropoutHTML = [];
+    for(var i = 0; i<9; i++){
+      dropoutHTML[i] = "";
+    }
+      $(document).ready(function() {
+        console.log("document ready");
+        loadXML();
+      });
+
+      function loadXML(){
+        $.ajax({
+          type:"GET",
+          url:"data.xml",
+          dataType:"xml",
+          success: parseXML
+        });
+      }//end load(xml)
+
+      function parseXML(xml){
+        $(xml).find("state").each(function(index){
+          tempData = [];
+          tempData.push($(this).attr("name"));
+          //states.push($(this).attr("name"));
+          //tempData.push(parseFloat($(this).find("_1980").text()).toFixed(1));
+          //tempData.push(parseFloat($(this).find("_1990").text()).toFixed(1));
+
+          for(var i=2000; i < 2009; i++){
+            var tempYear = "_" + i;
+            tempData.push(parseFloat($(this).find(tempYear).text()).toFixed(1));
+          }          
+          graduateData.push(tempData);
+        });
+
+        $(xml).find("demographic").each(function(index){
+          name = $(this).attr("name");
+          console.log();
+          tempData = []
+          tempData.push(name);
+
+          for(var i=0; i < 9; i++){
+            var tempYear = "_" + (i+2000);
+            var rate = parseFloat($(this).find(tempYear).text()).toFixed(1);
+            tempData.push(rate);
+            dropoutHTML[i] += "<h4>" + name + "</h4><span class='popup'>" + rate + "%</span><br />";
+          }
+
+          //dropoutHTML[];
+
+          dropoutData.push(tempData);
+
+        });
+        $('#graduateTable').html( '<table cellpadding="0" cellspacing="0" border="0" class="display" id="data1"></table>' );
+        $('#data1').dataTable( {
+          "aaData": graduateData,
+          "aoColumns": [
+              { "sTitle": "State" },
+              { "sTitle": "2000" },
+              { "sTitle": "2001" },
+              { "sTitle": "2002" },
+              { "sTitle": "2003" },
+              { "sTitle": "2004" },
+              { "sTitle": "2005" },
+              { "sTitle": "2006" },
+              { "sTitle": "2007" },
+              { "sTitle": "2008" } 
+          ]
+        });
+
+        //var statesHTML = "";
+
+       // for(var i = 0; i < states.length; i++){
+         // var tempArray = graduateData[i];
+         // statesHTML += "<button class='state' onclick=\"loadChart("+ i+ ", '#graduateChart', ";
+         // statesHTML += "'High School Graduates By Year', 'Number of Graduates in Thousnads')\"";
+         // statesHTML +=  ">" + states[i] + " </button>";
+        //}
+        //$("#states").append(statesHTML);
+
+        //load charts
+        loadChart(graduateData[0], "#graduateChart", "High School Graduates in The United States By Year", "Number of Graduates in Thousands");
+        loadChart(dropoutData[0], "#dropoutChart", "Percent High School Status Dropouts By Year", "Percent of Dropouts");
+
+        //load map
+        $('#map').usmap({
+          stateStyles: {fill: '#3f80a4'},
+          stateHoverStyles: {fill: '#ccdfe8'},
+          stateHoverAnimation: 200,
+          stateSpecificStyles:{
+            'MT': {fill: '#b73652'},
+            'WV': {fill: '#b73652'},
+            'ND': {fill: '#b73652'},
+            'SD': {fill: '#b73652'},
+            'LA': {fill: '#b73652'},
+            'UT': {fill: '#b73652'},
+            'NE': {fill: '#b73652'},
+            'WY': {fill: '#b73652'}
+          },
+          click: function(event, data) {
+            var clickedState = convert_state(data.name, 'name');
+            for(var i = 0; i < graduateData.length; i++){
+              if(clickedState == graduateData[i][0]){
+                loadChart(i, '#graduateChart', 'High School Graduates in '+clickedState+' By Year', 'Number of Graduates in Thousands')
+                break;
+              }
+            }
+            
+          }
+        });
+      }
+
+    function loadChart(data, id, title, yaxis){
+      if(data >= 0){
+        data = graduateData[data];
+      }
+      var name = data[0];
+      var tempArray = [];
+      for(var i = 1; i < data.length-1; i++){
+        tempArray.push(parseFloat(data[i]));
+      }
+
+      $(id).highcharts({
+        chart: {
+            type: 'line'
+        },
+        colors: ['#3f80a4'],
+        title: {
+            text: title,
+            style: {
+              fontFamily: "Ghed Istate", 
+              color: '#333'
+
+            }
+        },
+        xAxis: {
+            categories: ['2000', '2001', '2002', '2003', '2004', '2005', '2006', '2007', '2008']
+        },
+        yAxis: {
+            title: {
+                text: yaxis
+            }
+        },
+        series: [{
+            name: name,
+            data: tempArray
+        }],
+
+        plotOptions: {
+            series: {
+                point: {
+                    events: {
+                        click: function() {
+                                hs.htmlExpand(null, {
+                                    pageOrigin: {
+                                        x: this.pageX,
+                                        y: this.pageY
+                                    },
+                                    headingText: "200" + this.x + "-Dropout Rate by Demographic",
+                                    maincontentText: dropoutHTML[this.x],
+                                    width: 300,
+                                    height: 200
+                                });
+                            }
+                    }
+                }
+            }
+          }
+      });
+    }
+
+    //converting abbreviation to state from http://redactweb.com/javascript-to-convert-between-states-and-abbreviations/
+    function convert_state(name, to) {
+    var states = new Array(                         {'name':'Alabama', 'abbrev':'AL'},          {'name':'Alaska', 'abbrev':'AK'},
+        {'name':'Arizona', 'abbrev':'AZ'},          {'name':'Arkansas', 'abbrev':'AR'},         {'name':'California', 'abbrev':'CA'},
+        {'name':'Colorado', 'abbrev':'CO'},         {'name':'Connecticut', 'abbrev':'CT'},      {'name':'Delaware', 'abbrev':'DE'},
+        {'name':'Florida', 'abbrev':'FL'},          {'name':'Georgia', 'abbrev':'GA'},          {'name':'Hawaii', 'abbrev':'HI'},
+        {'name':'Idaho', 'abbrev':'ID'},            {'name':'Illinois', 'abbrev':'IL'},         {'name':'Indiana', 'abbrev':'IN'},
+        {'name':'Iowa', 'abbrev':'IA'},             {'name':'Kansas', 'abbrev':'KS'},           {'name':'Kentucky', 'abbrev':'KY'},
+        {'name':'Louisiana', 'abbrev':'LA'},        {'name':'Maine', 'abbrev':'ME'},            {'name':'Maryland', 'abbrev':'MD'},
+        {'name':'Massachusetts', 'abbrev':'MA'},    {'name':'Michigan', 'abbrev':'MI'},         {'name':'Minnesota', 'abbrev':'MN'},
+        {'name':'Mississippi', 'abbrev':'MS'},      {'name':'Missouri', 'abbrev':'MO'},         {'name':'Montana', 'abbrev':'MT'},
+        {'name':'Nebraska', 'abbrev':'NE'},         {'name':'Nevada', 'abbrev':'NV'},           {'name':'New Hampshire', 'abbrev':'NH'},
+        {'name':'New Jersey', 'abbrev':'NJ'},       {'name':'New Mexico', 'abbrev':'NM'},       {'name':'New York', 'abbrev':'NY'},
+        {'name':'North Carolina', 'abbrev':'NC'},   {'name':'North Dakota', 'abbrev':'ND'},     {'name':'Ohio', 'abbrev':'OH'},
+        {'name':'Oklahoma', 'abbrev':'OK'},         {'name':'Oregon', 'abbrev':'OR'},           {'name':'Pennsylvania', 'abbrev':'PA'},
+        {'name':'Rhode Island', 'abbrev':'RI'},     {'name':'South Carolina', 'abbrev':'SC'},   {'name':'South Dakota', 'abbrev':'SD'},
+        {'name':'Tennessee', 'abbrev':'TN'},        {'name':'Texas', 'abbrev':'TX'},            {'name':'Utah', 'abbrev':'UT'},
+        {'name':'Vermont', 'abbrev':'VT'},          {'name':'Virginia', 'abbrev':'VA'},         {'name':'Washington', 'abbrev':'WA'},
+        {'name':'West Virginia', 'abbrev':'WV'},    {'name':'Wisconsin', 'abbrev':'WI'},        {'name':'Wyoming', 'abbrev':'WY'}
+        );
+    var returnthis = false;
+    $.each(states, function(index, value){
+        if (to == 'name') {
+            if (value.abbrev.toLowerCase() == name.toLowerCase()){
+                returnthis = value.name;
+                return false;
+            }
+        } else if (to == 'abbrev') {
+            if (value.name.toLowerCase() == name.toLowerCase()){
+                returnthis = value.abbrev.toUpperCase();
+                return false;
+            }
+        }
+    });
+    return returnthis;
+}
+    </script>
+  </body>
+</html>
